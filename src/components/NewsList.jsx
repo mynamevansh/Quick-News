@@ -13,9 +13,9 @@ const NewsList = ({ articles, votes, onVoteUpdate, onReadFullArticle }) => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {articles.map((article) => (
+      {articles.map((article, index) => (
         <NewsCard
-          key={article.id}
+          key={`${article.url}-${index}`}
           article={article}
           votes={votes[article.id] || { upvotes: 0, downvotes: 0 }}
           onVoteUpdate={onVoteUpdate}
