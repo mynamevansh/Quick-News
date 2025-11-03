@@ -1,13 +1,14 @@
 // Navigation bar component with categories and authentication
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FaNewspaper, FaSignInAlt, FaSignOutAlt, FaUser } from 'react-icons/fa';
+import { FaNewspaper, FaSignInAlt, FaSignOutAlt, FaUser, FaSearch, FaTimes } from 'react-icons/fa';
 
-const Navbar = () => {
+const Navbar = ({ onSearch }) => {
   const { user, signInWithGoogle, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchQuery, setSearchQuery] = useState('');
 
   const categories = [
     { name: 'General', path: '/' },
@@ -36,19 +37,66 @@ const Navbar = () => {
     }
   };
 
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim() && onSearch) {
+      onSearch(searchQuery.trim());
+    }
+  };
+
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    
+    // Clear search when input is empty
+    if (!value.trim() && onSearch) {
+      onSearch('');
+    }
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    if (onSearch) {
+      onSearch('');
+    }
+  };
+
   return (
     <nav className="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg sticky top-0 z-50">
-      {/* Top Bar with Logo and Auth */}
+      {/* Top Bar with Logo, Search and Auth */}
       <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-4">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2 text-2xl font-bold hover:opacity-90 transition">
+          <Link to="/" className="flex items-center space-x-2 text-2xl font-bold hover:opacity-90 transition flex-shrink-0">
             <FaNewspaper className="text-3xl" />
-            <span>NewsHub</span>
+            <span className="hidden sm:inline">NewsHub</span>
           </Link>
 
+          {/* Search Bar */}
+          <form onSubmit={handleSearchSubmit} className="flex-grow max-w-md">
+            <div className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={handleSearchChange}
+                placeholder="Search news (e.g., AI, Elections, Sports)..."
+                className="w-full px-4 py-2 pl-10 pr-10 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-300"
+              />
+              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={clearSearch}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <FaTimes />
+                </button>
+              )}
+            </div>
+          </form>
+
           {/* Auth Button */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4 flex-shrink-0">
             {user ? (
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2 bg-blue-700 px-4 py-2 rounded-lg">

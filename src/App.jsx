@@ -1,20 +1,26 @@
 // Main App component with routing
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 
 function App() {
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSearch = (query) => {
+    setSearchQuery(query);
+  };
+
   return (
     <AuthProvider>
       <Router>
         <div className="min-h-screen bg-gray-50">
-          <Navbar />
+          <Navbar onSearch={handleSearch} />
           <main>
             <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/category/:category" element={<Home />} />
+              <Route path="/" element={<Home searchQuery={searchQuery} />} />
+              <Route path="/category/:category" element={<Home searchQuery={searchQuery} />} />
             </Routes>
           </main>
           

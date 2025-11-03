@@ -1,7 +1,7 @@
 // Home page component with news fetching and filtering
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { fetchTopHeadlines } from '../services/newsService';
+import { fetchTopHeadlines, searchNews } from '../services/newsService';
 import { generateArticleId } from '../services/newsService';
 import { getBatchArticleVotes } from '../services/voteService';
 import { useAuth } from '../context/AuthContext';
@@ -11,7 +11,7 @@ import FilterSort from '../components/FilterSort';
 import TopTrending from '../components/TopTrending';
 import ArticleModal from '../components/ArticleModal';
 
-const Home = () => {
+const Home = ({ searchQuery }) => {
   const { category } = useParams();
   const { user, signInWithGoogle } = useAuth();
   
@@ -22,15 +22,26 @@ const Home = () => {
   const [sortBy, setSortBy] = useState('highest-votes');
   const [dateRange, setDateRange] = useState('all');
   const [selectedArticle, setSelectedArticle] = useState(null);
+  const [isSearching, setIsSearching] = useState(false);
 
   // Fetch news articles
   useEffect(() => {
     fetchNews();
   }, [category]);
 
+  // Handle search query changes
+  useEffect(() => {
+    if (searchQuery && searchQuery.trim()) {
+      handleSearch(searchQuery);
+    } else {
+      fetchNews();
+    }
+  }, [searchQuery]);
+
   const fetchNews = async () => {
     setLoading(true);
     setError(null);
+    setIsSearching(false);
 
     try {
       // Fetch articles from NewsAPI
@@ -41,6 +52,37 @@ const Home = () => {
         ...article,
         id: generateArticleId(article),
         category: category || 'general'
+      }));
+
+      setArticles(articlesWithIds);
+
+      // Fetch votes for all articles
+      const articleIds = articlesWithIds.map(a => a.id);
+      const votesData = await getBatchArticleVotes(articleIds);
+      setVotes(votesData);
+
+    } catch (err) {
+      setError(err.message || 'Failed to fetch news. Please try again later.');
+      console.error('Error fetching news:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = async (query) => {
+    setLoading(true);
+    setError(null);
+    setIsSearching(true);
+
+    try {
+      // Search articles from NewsAPI
+      const fetchedArticles = await searchNews(query);
+      
+      // Add unique IDs to articles
+      const articlesWithIds = fetchedArticles.map(article => ({
+        ...article,
+        id: generateArticleId(article),
+        category: 'search'
       }));
 
       setArticles(articlesWithIds);
@@ -182,14 +224,17 @@ const Home = () => {
     <div className="container mx-auto px-4 py-8">
       {/* Page Title */}
       <h1 className="text-4xl font-bold text-gray-800 mb-2 capitalize">
-        {category || 'General'} News
+        {isSearching ? `Search Results for "${searchQuery}"` : `${category || 'General'} News`}
       </h1>
       <p className="text-gray-600 mb-8">
-        Stay updated with the latest {category || 'general'} news from around the world
+        {isSearching 
+          ? `Found ${sortedArticles.length} articles matching your search`
+          : `Stay updated with the latest ${category || 'general'} news from around the world`
+        }
       </p>
 
-      {/* Top Trending Section */}
-      {topTrending.length > 0 && (
+      {/* Top Trending Section - hide during search */}
+      {!isSearching && topTrending.length > 0 && (
         <TopTrending articles={topTrending} onArticleClick={handleReadFullArticle} />
       )}
 
