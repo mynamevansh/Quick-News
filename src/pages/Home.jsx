@@ -160,10 +160,18 @@ const Home = ({ searchQuery }) => {
 
     switch (sortBy) {
       case 'highest-votes':
+        // Sort by upvotes (desc), then by publishedAt (desc)
         sorted.sort((a, b) => {
-          const aVotes = (votes[a.id]?.upvotes || 0) - (votes[a.id]?.downvotes || 0);
-          const bVotes = (votes[b.id]?.upvotes || 0) - (votes[b.id]?.downvotes || 0);
-          return bVotes - aVotes;
+          const aUpvotes = votes[a.id]?.upvotes || 0;
+          const bUpvotes = votes[b.id]?.upvotes || 0;
+          
+          // First, compare upvotes
+          if (bUpvotes !== aUpvotes) {
+            return bUpvotes - aUpvotes;
+          }
+          
+          // If upvotes are equal, compare by date (newest first)
+          return new Date(b.publishedAt) - new Date(a.publishedAt);
         });
         break;
       case 'newest':

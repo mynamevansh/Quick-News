@@ -50,10 +50,10 @@ const VoteButtons = ({ articleId, votes, onVoteUpdate }) => {
     setIsVoting(true);
 
     try {
-      // Cast vote
+      // Cast vote and store in Firestore
       const updatedVotes = await castVote(user.uid, articleId, voteType);
       
-      // Update local state
+      // Update local state ONLY (don't trigger re-sort)
       setLocalVotes(updatedVotes);
       
       // Check if vote was removed or changed
@@ -63,7 +63,8 @@ const VoteButtons = ({ articleId, votes, onVoteUpdate }) => {
         setUserVote(voteType);
       }
 
-      // Notify parent component
+      // Update parent's vote state without re-sorting
+      // The new order will appear after page refresh
       if (onVoteUpdate) {
         onVoteUpdate(articleId, updatedVotes);
       }

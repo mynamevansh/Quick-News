@@ -63,31 +63,32 @@ const Navbar = ({ onSearch }) => {
 
   return (
     <nav className="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg sticky top-0 z-50">
-      {/* Top Bar with Logo, Search and Auth */}
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between gap-4">
+      {/* Top Bar: Logo | Search Bar | User Info | Sign Out */}
+      <div className="container mx-auto px-4 py-3">
+        <div className="flex items-center gap-6">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2 text-2xl font-bold hover:opacity-90 transition flex-shrink-0">
             <FaNewspaper className="text-3xl" />
-            <span className="hidden sm:inline">NewsHub</span>
+            <span className="hidden lg:inline">NewsHub</span>
           </Link>
 
-          {/* Search Bar */}
-          <form onSubmit={handleSearchSubmit} className="flex-grow max-w-md">
+          {/* Search Bar - Center */}
+          <form onSubmit={handleSearchSubmit} className="flex-1 max-w-2xl mx-auto">
             <div className="relative">
               <input
                 type="text"
                 value={searchQuery}
                 onChange={handleSearchChange}
-                placeholder="Search news (e.g., AI, Elections, Sports)..."
-                className="w-full px-4 py-2 pl-10 pr-10 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                placeholder="Search news..."
+                className="w-full px-4 py-2 pl-10 pr-10 rounded-lg text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-300 shadow-sm"
               />
-              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm" />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={clearSearch}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+                  aria-label="Clear search"
                 >
                   <FaTimes />
                 </button>
@@ -95,33 +96,41 @@ const Navbar = ({ onSearch }) => {
             </div>
           </form>
 
-          {/* Auth Button */}
-          <div className="flex items-center space-x-4 flex-shrink-0">
+          {/* User Section - Right */}
+          <div className="flex items-center space-x-3 flex-shrink-0">
             {user ? (
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2 bg-blue-700 px-4 py-2 rounded-lg">
+              <>
+                {/* User Photo and Name */}
+                <div className="flex items-center space-x-2 bg-blue-700 px-3 py-2 rounded-lg">
                   {user.photoURL ? (
-                    <img src={user.photoURL} alt={user.displayName} className="w-8 h-8 rounded-full" />
+                    <img 
+                      src={user.photoURL} 
+                      alt={user.displayName} 
+                      className="w-8 h-8 rounded-full border-2 border-white" 
+                    />
                   ) : (
-                    <FaUser className="text-xl" />
+                    <FaUser className="text-lg" />
                   )}
-                  <span className="hidden md:inline font-medium">{user.displayName}</span>
+                  <span className="hidden lg:inline font-medium text-sm">{user.displayName}</span>
                 </div>
+                
+                {/* Sign Out Button */}
                 <button
                   onClick={handleSignOut}
-                  className="flex items-center space-x-2 bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg transition font-medium"
+                  className="flex items-center space-x-2 bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg transition font-medium shadow-md"
+                  aria-label="Sign out"
                 >
-                  <FaSignOutAlt />
-                  <span className="hidden md:inline">Sign Out</span>
+                  <FaSignOutAlt className="text-lg" />
+                  <span className="hidden sm:inline text-sm">Sign Out</span>
                 </button>
-              </div>
+              </>
             ) : (
               <button
                 onClick={handleSignIn}
-                className="flex items-center space-x-2 bg-white text-blue-600 hover:bg-gray-100 px-4 py-2 rounded-lg transition font-medium shadow-md"
+                className="flex items-center space-x-2 bg-white text-blue-600 hover:bg-gray-100 px-4 py-2 rounded-lg transition font-medium shadow-md whitespace-nowrap"
               >
                 <FaSignInAlt />
-                <span>Sign In with Google</span>
+                <span className="hidden sm:inline text-sm">Sign In</span>
               </button>
             )}
           </div>
