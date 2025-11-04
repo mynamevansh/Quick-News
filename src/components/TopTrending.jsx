@@ -44,16 +44,14 @@ const TopTrending = ({ articles, onArticleClick }) => {
                 </div>
 
                 {/* Thumbnail */}
-                {article.urlToImage && (
-                  <img
-                    src={article.urlToImage}
-                    alt={article.title}
-                    className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                    }}
-                  />
-                )}
+                <img
+                  src={article.urlToImage || 'https://placehold.co/80x80?text=No+Image'}
+                  alt={article.title}
+                  className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
+                  onError={(e) => {
+                    e.target.src = 'https://placehold.co/80x80?text=No+Image';
+                  }}
+                />
               </div>
             </div>
           );

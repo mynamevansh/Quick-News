@@ -25,16 +25,14 @@ const ArticleModal = ({ article, onClose }) => {
         {/* Content */}
         <div className="p-6">
           {/* Image */}
-          {article.urlToImage && (
-            <img
-              src={article.urlToImage}
-              alt={article.title}
-              className="w-full h-64 object-cover rounded-lg mb-6"
-              onError={(e) => {
-                e.target.style.display = 'none';
-              }}
-            />
-          )}
+          <img
+            src={article.urlToImage || 'https://placehold.co/800x400?text=No+Image+Available'}
+            alt={article.title}
+            className="w-full h-64 object-cover rounded-lg mb-6"
+            onError={(e) => {
+              e.target.src = 'https://placehold.co/800x400?text=No+Image+Available';
+            }}
+          />
 
           {/* Source and Date */}
           <div className="flex items-center justify-between mb-4 text-sm text-gray-600">
