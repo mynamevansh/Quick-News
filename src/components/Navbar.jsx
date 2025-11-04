@@ -102,15 +102,15 @@ const Navbar = ({ onSearch }) => {
               <>
                 {/* User Photo and Name */}
                 <div className="flex items-center space-x-2 bg-blue-700 px-3 py-2 rounded-lg">
-                  {user.photoURL ? (
-                    <img 
-                      src={user.photoURL} 
-                      alt={user.displayName} 
-                      className="w-8 h-8 rounded-full border-2 border-white" 
-                    />
-                  ) : (
-                    <FaUser className="text-lg" />
-                  )}
+                  <img 
+                    src={user.photoURL || "https://placehold.co/40x40?text=User"} 
+                    alt={user.displayName || "User"} 
+                    className="w-8 h-8 rounded-full border-2 border-white"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      e.target.src = "https://placehold.co/40x40?text=User";
+                    }}
+                  />
                   <span className="hidden lg:inline font-medium text-sm">{user.displayName}</span>
                 </div>
                 

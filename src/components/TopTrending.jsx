@@ -16,12 +16,15 @@ const TopTrending = ({ articles, onArticleClick }) => {
 
       <div className="space-y-4">
         {articles.map((article, index) => {
-          const netVotes = (article.votes?.upvotes || 0) - (article.votes?.downvotes || 0);
-          
+          const netVotes =
+            (article.votes?.upvotes || 0) - (article.votes?.downvotes || 0);
+
           return (
             <div
-              key={article.id}
+              key={`trending-${article.url || article.title || 'article'}-${index}`}
               onClick={() => onArticleClick(article)}
+              role="button"
+              tabIndex="0"
               className="bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg p-4 cursor-pointer transition backdrop-blur-sm"
             >
               <div className="flex items-start space-x-4">
@@ -38,15 +41,17 @@ const TopTrending = ({ articles, onArticleClick }) => {
                   <div className="flex items-center justify-between text-sm">
                     <span>{article.source?.name}</span>
                     <span className="bg-white bg-opacity-30 px-3 py-1 rounded-full font-semibold">
-                      {netVotes > 0 ? '+' : ''}{netVotes} votes
+                      {netVotes > 0 ? '+' : ''}
+                      {netVotes} votes
                     </span>
                   </div>
                 </div>
 
                 {/* Thumbnail */}
                 <img
+                  loading="lazy"
                   src={article.urlToImage || 'https://placehold.co/80x80?text=No+Image'}
-                  alt={article.title}
+                  alt={article.title || 'Article Image'}
                   className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
                   onError={(e) => {
                     e.target.src = 'https://placehold.co/80x80?text=No+Image';

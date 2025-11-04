@@ -11,13 +11,20 @@ const NewsList = ({ articles, votes, onVoteUpdate, onReadFullArticle }) => {
     );
   }
 
+  // Sort articles by highest net votes (upvotes - downvotes)
+  const sortedArticles = [...articles].sort((a, b) => {
+    const netVotesA = (votes[a.url]?.upvotes || 0) - (votes[a.url]?.downvotes || 0);
+    const netVotesB = (votes[b.url]?.upvotes || 0) - (votes[b.url]?.downvotes || 0);
+    return netVotesB - netVotesA; // highest first
+  });
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {articles.map((article, index) => (
+      {sortedArticles.map((article, index) => (
         <NewsCard
-          key={`${article.url}-${index}`}
+          key={`${article.url || article.title || 'article'}-${index}`}
           article={article}
-          votes={votes[article.id] || { upvotes: 0, downvotes: 0 }}
+          votes={votes[article.url || article.title] || { upvotes: 0, downvotes: 0 }}
           onVoteUpdate={onVoteUpdate}
           onReadFullArticle={onReadFullArticle}
         />

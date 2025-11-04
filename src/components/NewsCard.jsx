@@ -26,19 +26,17 @@ const NewsCard = ({ article, votes, onVoteUpdate, onReadFullArticle }) => {
     }
   };
 
-  // Fallback image if article image is missing
-  const imageUrl = article.urlToImage || 'https://placehold.co/400x250?text=No+Image+Available';
-
   return (
     <div className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden flex flex-col h-full">
       {/* Article Image */}
-      <div className="relative h-48 overflow-hidden">
+      <div className="relative h-64 overflow-hidden">
         <img
-          src={imageUrl}
-          alt={article.title}
-          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+          loading="lazy"
+          src={article.urlToImage || "https://placehold.co/400x250?text=No+Image+Available"}
+          alt={article.title || "News image"}
+          className="rounded-lg w-full h-64 object-cover"
           onError={(e) => {
-            e.target.src = 'https://placehold.co/400x250?text=No+Image+Available';
+            e.target.src = "https://placehold.co/400x250?text=Image+Unavailable";
           }}
         />
         {/* Category Badge */}
