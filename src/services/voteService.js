@@ -2,22 +2,16 @@
 import { 
   doc, 
   setDoc, 
-  getDoc, 
-  updateDoc, 
-  increment, 
-  collection,
-  query,
-  getDocs
+  getDoc
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
 const VOTES_COLLECTION = 'articleVotes';
-const USER_VOTES_COLLECTION = 'userVotes';
 
 /**
  * Get vote data for an article
  * @param {string} articleId - Unique article ID
- * @returns {Promise<Object>} Vote data { upvotes, downvotes }
+ * @returns {Promise<Object>} Vote data { upvotes, downvotes, voters }
  */
 export const getArticleVotes = async (articleId) => {
   try {
@@ -29,10 +23,10 @@ export const getArticleVotes = async (articleId) => {
     }
     
     // Initialize if doesn't exist
-    return { upvotes: 0, downvotes: 0 };
+    return { upvotes: 0, downvotes: 0, voters: {} };
   } catch (error) {
     console.error('Error getting article votes:', error);
-    return { upvotes: 0, downvotes: 0 };
+    return { upvotes: 0, downvotes: 0, voters: {} };
   }
 };
 
@@ -44,11 +38,12 @@ export const getArticleVotes = async (articleId) => {
  */
 export const getUserVote = async (userId, articleId) => {
   try {
-    const docRef = doc(db, USER_VOTES_COLLECTION, `${userId}_${articleId}`);
-    const docSnap = await getDoc(docRef);
+    const articleVoteRef = doc(db, VOTES_COLLECTION, articleId);
+    const articleVoteSnap = await getDoc(articleVoteRef);
     
-    if (docSnap.exists()) {
-      return docSnap.data().voteType;
+    if (articleVoteSnap.exists()) {
+      const data = articleVoteSnap.data();
+      return data.voters?.[userId] || null;
     }
     
     return null;
@@ -63,60 +58,60 @@ export const getUserVote = async (userId, articleId) => {
  * @param {string} userId - User ID
  * @param {string} articleId - Article ID
  * @param {string} voteType - 'upvote' or 'downvote'
- * @returns {Promise<Object>} Updated vote counts
+ * @returns {Promise<Object>} Vote recorded status
  */
 export const castVote = async (userId, articleId, voteType) => {
   try {
-    const userVoteRef = doc(db, USER_VOTES_COLLECTION, `${userId}_${articleId}`);
     const articleVoteRef = doc(db, VOTES_COLLECTION, articleId);
     
-    // Get current user vote
-    const currentVote = await getUserVote(userId, articleId);
-    
-    // Initialize article votes if not exists
+    // Get current article data
     const articleVoteSnap = await getDoc(articleVoteRef);
-    if (!articleVoteSnap.exists()) {
-      await setDoc(articleVoteRef, { upvotes: 0, downvotes: 0 });
-    }
+    let articleData = articleVoteSnap.exists() 
+      ? articleVoteSnap.data() 
+      : { upvotes: 0, downvotes: 0, voters: {} };
+    
+    // Get user's current vote from voters object
+    const currentVote = articleData.voters?.[userId] || null;
     
     // Handle vote logic
     if (currentVote === voteType) {
-      // Remove vote (user clicked same button)
-      await setDoc(userVoteRef, { voteType: null });
+      // User is removing their vote
+      const updatedVoters = { ...articleData.voters };
+      delete updatedVoters[userId];
       
-      if (voteType === 'upvote') {
-        await updateDoc(articleVoteRef, { upvotes: increment(-1) });
-      } else {
-        await updateDoc(articleVoteRef, { downvotes: increment(-1) });
-      }
+      await setDoc(articleVoteRef, {
+        upvotes: voteType === 'upvote' ? articleData.upvotes - 1 : articleData.upvotes,
+        downvotes: voteType === 'downvote' ? articleData.downvotes - 1 : articleData.downvotes,
+        voters: updatedVoters
+      });
     } else if (currentVote === null) {
-      // Add new vote
-      await setDoc(userVoteRef, { voteType, userId, articleId, timestamp: new Date() });
-      
-      if (voteType === 'upvote') {
-        await updateDoc(articleVoteRef, { upvotes: increment(1) });
-      } else {
-        await updateDoc(articleVoteRef, { downvotes: increment(1) });
-      }
+      // User is casting a new vote
+      await setDoc(articleVoteRef, {
+        upvotes: voteType === 'upvote' ? articleData.upvotes + 1 : articleData.upvotes,
+        downvotes: voteType === 'downvote' ? articleData.downvotes + 1 : articleData.downvotes,
+        voters: {
+          ...articleData.voters,
+          [userId]: voteType
+        }
+      });
     } else {
-      // Change vote
-      await setDoc(userVoteRef, { voteType, userId, articleId, timestamp: new Date() });
-      
-      if (voteType === 'upvote') {
-        await updateDoc(articleVoteRef, { 
-          upvotes: increment(1),
-          downvotes: increment(-1)
-        });
-      } else {
-        await updateDoc(articleVoteRef, { 
-          upvotes: increment(-1),
-          downvotes: increment(1)
-        });
-      }
+      // User is changing their vote
+      await setDoc(articleVoteRef, {
+        upvotes: voteType === 'upvote' 
+          ? articleData.upvotes + 1 
+          : articleData.upvotes - 1,
+        downvotes: voteType === 'downvote' 
+          ? articleData.downvotes + 1 
+          : articleData.downvotes - 1,
+        voters: {
+          ...articleData.voters,
+          [userId]: voteType
+        }
+      });
     }
     
-    // Get updated votes
-    return await getArticleVotes(articleId);
+    // Return success status (don't fetch updated votes)
+    return { success: true };
   } catch (error) {
     console.error('Error casting vote:', error);
     throw error;

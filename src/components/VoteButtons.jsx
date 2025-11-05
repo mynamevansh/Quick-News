@@ -51,23 +51,20 @@ const VoteButtons = ({ articleId, votes, onVoteUpdate }) => {
 
     try {
       // Cast vote and store in Firestore
-      const updatedVotes = await castVote(user.uid, articleId, voteType);
+      await castVote(user.uid, articleId, voteType);
       
-      // Update local state ONLY (don't trigger re-sort)
-      setLocalVotes(updatedVotes);
-      
-      // Check if vote was removed or changed
+      // Update user vote state for button highlighting
       if (userVote === voteType) {
         setUserVote(null);
       } else {
         setUserVote(voteType);
       }
 
-      // Update parent's vote state without re-sorting
-      // The new order will appear after page refresh
-      if (onVoteUpdate) {
-        onVoteUpdate(articleId, updatedVotes);
-      }
+      // Show alert that vote was recorded
+      alert('Vote recorded! Refresh to see results.');
+      
+      // DO NOT update local votes or parent state
+      // The new vote counts will only appear after page refresh
     } catch (error) {
       console.error('Error voting:', error);
       alert('Failed to cast vote. Please try again.');

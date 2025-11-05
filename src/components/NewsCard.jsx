@@ -7,6 +7,15 @@ import { useAuth } from '../context/AuthContext';
 const NewsCard = ({ article, votes, onVoteUpdate, onReadFullArticle }) => {
   const { user } = useAuth();
 
+  // Helper to check if image URL is valid
+  const isValidImageUrl = (url) => {
+    if (!url) return false;
+    // Must start with http and not contain known broken domains
+    if (!url.startsWith('http')) return false;
+    if (url.includes('phonearena.com') || url.includes('feedburner.com')) return false;
+    return true;
+  };
+
   // Format date
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -30,15 +39,26 @@ const NewsCard = ({ article, votes, onVoteUpdate, onReadFullArticle }) => {
     <div className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden flex flex-col h-full">
       {/* Article Image */}
       <div className="relative h-64 overflow-hidden">
-        <img
-          loading="lazy"
-          src={article.urlToImage || "https://placehold.co/400x250?text=No+Image+Available"}
-          alt={article.title || "News image"}
-          className="rounded-lg w-full h-64 object-cover"
-          onError={(e) => {
-            e.target.src = "https://placehold.co/400x250?text=Image+Unavailable";
-          }}
-        />
+        {isValidImageUrl(article.urlToImage) ? (
+          <img
+            loading="lazy"
+            src={article.urlToImage}
+            alt={article.title || 'News image'}
+            className="rounded-lg w-full h-64 object-cover"
+            onError={(e) => {
+              e.target.onerror = null; // prevent infinite loop
+              e.target.src = 'https://placehold.co/400x250?text=Image+Unavailable';
+            }}
+          />
+        ) : (
+          <img
+            loading="lazy"
+            src="https://placehold.co/400x250?text=No+Image+Available"
+            alt="No image available"
+            className="rounded-lg w-full h-64 object-cover"
+          />
+        )}
+
         {/* Category Badge */}
         {article.category && (
           <div className="absolute top-2 right-2 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-semibold shadow-md">
@@ -73,7 +93,7 @@ const NewsCard = ({ article, votes, onVoteUpdate, onReadFullArticle }) => {
         {/* Vote Buttons */}
         <div className="mb-4">
           <VoteButtons
-            articleId={article.id}
+            articleId={article.id || article.url} // fallback to URL if no id
             votes={votes}
             onVoteUpdate={onVoteUpdate}
           />

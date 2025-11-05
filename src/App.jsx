@@ -7,20 +7,27 @@ import Home from './pages/Home';
 
 function App() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [resetTrigger, setResetTrigger] = useState(0);
 
   const handleSearch = (query) => {
     setSearchQuery(query);
+  };
+
+  const handleLogoClick = () => {
+    // Clear search and trigger reset to general news
+    setSearchQuery('');
+    setResetTrigger(prev => prev + 1); // Increment to trigger re-fetch
   };
 
   return (
     <AuthProvider>
       <Router>
         <div className="min-h-screen bg-gray-50">
-          <Navbar onSearch={handleSearch} />
+          <Navbar onSearch={handleSearch} onLogoClick={handleLogoClick} />
           <main>
             <Routes>
-              <Route path="/" element={<Home searchQuery={searchQuery} />} />
-              <Route path="/category/:category" element={<Home searchQuery={searchQuery} />} />
+              <Route path="/" element={<Home searchQuery={searchQuery} resetTrigger={resetTrigger} />} />
+              <Route path="/category/:category" element={<Home searchQuery={searchQuery} resetTrigger={resetTrigger} />} />
             </Routes>
           </main>
           

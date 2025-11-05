@@ -11,7 +11,7 @@ import FilterSort from '../components/FilterSort';
 import TopTrending from '../components/TopTrending';
 import ArticleModal from '../components/ArticleModal';
 
-const Home = ({ searchQuery }) => {
+const Home = ({ searchQuery, resetTrigger }) => {
   const { category } = useParams();
   const { user, signInWithGoogle } = useAuth();
   
@@ -23,8 +23,16 @@ const Home = ({ searchQuery }) => {
   const [dateRange, setDateRange] = useState('all');
   const [selectedArticle, setSelectedArticle] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [lastSearchQuery, setLastSearchQuery] = useState('');
 
-  // Fetch news articles
+  // Reset to general news when logo is clicked
+  useEffect(() => {
+    if (resetTrigger > 0) {
+      resetToGeneral();
+    }
+  }, [resetTrigger]);
+
+  // Fetch news articles when category changes
   useEffect(() => {
     fetchNews();
   }, [category]);
@@ -32,16 +40,21 @@ const Home = ({ searchQuery }) => {
   // Handle search query changes
   useEffect(() => {
     if (searchQuery && searchQuery.trim()) {
+      // New search query provided
       handleSearch(searchQuery);
-    } else {
+      setLastSearchQuery(searchQuery);
+    } else if (searchQuery === '' && lastSearchQuery === '') {
+      // No search active, load regular news
       fetchNews();
     }
-  }, [searchQuery]);
+    // If searchQuery is empty but lastSearchQuery exists, keep showing last results
+  }, [searchQuery, category]);
 
   const fetchNews = async () => {
     setLoading(true);
     setError(null);
     setIsSearching(false);
+    setLastSearchQuery(''); // Clear last search query when loading regular news
 
     try {
       // Fetch articles from NewsAPI
@@ -52,6 +65,38 @@ const Home = ({ searchQuery }) => {
         ...article,
         id: generateArticleId(article),
         category: category || 'general'
+      }));
+
+      setArticles(articlesWithIds);
+
+      // Fetch votes for all articles
+      const articleIds = articlesWithIds.map(a => a.id);
+      const votesData = await getBatchArticleVotes(articleIds);
+      setVotes(votesData);
+
+    } catch (err) {
+      setError(err.message || 'Failed to fetch news. Please try again later.');
+      console.error('Error fetching news:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetToGeneral = async () => {
+    setLoading(true);
+    setError(null);
+    setIsSearching(false);
+    setLastSearchQuery(''); // Clear search state
+
+    try {
+      // Always fetch general news when resetting
+      const fetchedArticles = await fetchTopHeadlines('general');
+      
+      // Add unique IDs to articles
+      const articlesWithIds = fetchedArticles.map(article => ({
+        ...article,
+        id: generateArticleId(article),
+        category: 'general'
       }));
 
       setArticles(articlesWithIds);
@@ -160,17 +205,20 @@ const Home = ({ searchQuery }) => {
 
     switch (sortBy) {
       case 'highest-votes':
-        // Sort by upvotes (desc), then by publishedAt (desc)
+        // Sort by net votes (upvotes - downvotes) desc, then by publishedAt (desc)
         sorted.sort((a, b) => {
-          const aUpvotes = votes[a.id]?.upvotes || 0;
-          const bUpvotes = votes[b.id]?.upvotes || 0;
+          const aVotes = votes[a.id] || { upvotes: 0, downvotes: 0 };
+          const bVotes = votes[b.id] || { upvotes: 0, downvotes: 0 };
           
-          // First, compare upvotes
-          if (bUpvotes !== aUpvotes) {
-            return bUpvotes - aUpvotes;
+          const aNetVotes = aVotes.upvotes - aVotes.downvotes;
+          const bNetVotes = bVotes.upvotes - bVotes.downvotes;
+          
+          // First, compare net votes
+          if (bNetVotes !== aNetVotes) {
+            return bNetVotes - aNetVotes;
           }
           
-          // If upvotes are equal, compare by date (newest first)
+          // If net votes are equal, compare by date (newest first)
           return new Date(b.publishedAt) - new Date(a.publishedAt);
         });
         break;
@@ -232,7 +280,7 @@ const Home = ({ searchQuery }) => {
     <div className="container mx-auto px-4 py-8">
       {/* Page Title */}
       <h1 className="text-4xl font-bold text-gray-800 mb-2 capitalize">
-        {isSearching ? `Search Results for "${searchQuery}"` : `${category || 'General'} News`}
+        {isSearching ? `Search Results for "${lastSearchQuery}"` : `${category || 'General'} News`}
       </h1>
       <p className="text-gray-600 mb-8">
         {isSearching 

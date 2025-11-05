@@ -4,11 +4,11 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { FaNewspaper, FaSignInAlt, FaSignOutAlt, FaUser, FaSearch, FaTimes } from 'react-icons/fa';
 
-const Navbar = ({ onSearch }) => {
+const Navbar = ({ onSearch, onLogoClick }) => {
   const { user, signInWithGoogle, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchInput, setSearchInput] = useState('');
 
   const categories = [
     { name: 'General', path: '/' },
@@ -39,25 +39,50 @@ const Navbar = ({ onSearch }) => {
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    if (searchQuery.trim() && onSearch) {
-      onSearch(searchQuery.trim());
+    if (searchInput.trim() && onSearch) {
+      onSearch(searchInput.trim());
     }
   };
 
   const handleSearchChange = (e) => {
     const value = e.target.value;
-    setSearchQuery(value);
+    setSearchInput(value);
+    // Do NOT clear search results when input is cleared
+    // Results stay until user performs a new search
+  };
+
+  const clearSearchInput = () => {
+    setSearchInput('');
+    // Do NOT clear search results, only clear the input field
+  };
+
+  const handleLogoClickInternal = (e) => {
+    e.preventDefault();
+    // Clear search input and results when logo is clicked
+    setSearchInput('');
     
-    // Clear search when input is empty
-    if (!value.trim() && onSearch) {
-      onSearch('');
+    // Check if already on homepage
+    const isOnHomepage = location.pathname === '/';
+    
+    if (isOnHomepage) {
+      // Already on home, refresh the page to reload general news
+      window.location.reload();
+    } else {
+      // Navigate to home
+      navigate('/');
+    }
+    
+    // Trigger reset to general news
+    if (onLogoClick) {
+      onLogoClick();
     }
   };
 
-  const clearSearch = () => {
-    setSearchQuery('');
-    if (onSearch) {
-      onSearch('');
+  const handleCategoryClick = () => {
+    // Clear search input and results when category is clicked
+    setSearchInput('');
+    if (onLogoClick) {
+      onLogoClick();
     }
   };
 
@@ -67,28 +92,33 @@ const Navbar = ({ onSearch }) => {
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center gap-6">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2 text-2xl font-bold hover:opacity-90 transition flex-shrink-0">
+          <a
+            href="/"
+            onClick={handleLogoClickInternal}
+            className="flex items-center space-x-2 text-2xl font-bold hover:opacity-90 transition flex-shrink-0 cursor-pointer"
+          >
             <FaNewspaper className="text-3xl" />
             <span className="hidden lg:inline">NewsHub</span>
-          </Link>
+          </a>
 
           {/* Search Bar - Center */}
           <form onSubmit={handleSearchSubmit} className="flex-1 max-w-2xl mx-auto">
             <div className="relative">
               <input
                 type="text"
-                value={searchQuery}
+                value={searchInput}
                 onChange={handleSearchChange}
                 placeholder="Search news..."
                 className="w-full px-4 py-2 pl-10 pr-10 rounded-lg text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-300 shadow-sm"
               />
               <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm" />
-              {searchQuery && (
+              {searchInput && (
                 <button
                   type="button"
-                  onClick={clearSearch}
+                  onClick={clearSearchInput}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
-                  aria-label="Clear search"
+                  aria-label="Clear search input"
+                  title="Clear input (results will remain)"
                 >
                   <FaTimes />
                 </button>
@@ -147,6 +177,7 @@ const Navbar = ({ onSearch }) => {
                 <Link
                   key={category.name}
                   to={category.path}
+                  onClick={handleCategoryClick}
                   className={`px-4 py-2 rounded-lg whitespace-nowrap transition font-medium ${
                     isActive
                       ? 'bg-white text-blue-600 shadow-md'

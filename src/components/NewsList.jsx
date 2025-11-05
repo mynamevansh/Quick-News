@@ -11,12 +11,25 @@ const NewsList = ({ articles, votes, onVoteUpdate, onReadFullArticle }) => {
     );
   }
 
-  // Sort articles by highest net votes (upvotes - downvotes)
-  const sortedArticles = [...articles].sort((a, b) => {
+  // ✅ Filter: only include articles with valid images
+  const filteredArticles = articles.filter(
+    (article) => article.urlToImage && article.urlToImage.trim() !== ""
+  );
+
+  // Sort by upvotes (optional, from before)
+  const sortedArticles = [...filteredArticles].sort((a, b) => {
     const netVotesA = (votes[a.url]?.upvotes || 0) - (votes[a.url]?.downvotes || 0);
     const netVotesB = (votes[b.url]?.upvotes || 0) - (votes[b.url]?.downvotes || 0);
     return netVotesB - netVotesA; // highest first
   });
+
+  if (sortedArticles.length === 0) {
+    return (
+      <div className="text-center py-16">
+        <p className="text-gray-500 text-xl">No articles with images found.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
