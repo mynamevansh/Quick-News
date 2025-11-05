@@ -105,6 +105,8 @@ const Navbar = ({ onSearch, onLogoClick }) => {
           <form onSubmit={handleSearchSubmit} className="flex-1 max-w-2xl mx-auto">
             <div className="relative">
               <input
+                id="search"
+                name="search"
                 type="text"
                 value={searchInput}
                 onChange={handleSearchChange}

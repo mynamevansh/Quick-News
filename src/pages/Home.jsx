@@ -1,7 +1,7 @@
 // Home page component with news fetching and filtering
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { fetchTopHeadlines, searchNews } from '../services/newsService';
+import { fetchTopHeadlines, searchNews, calculateDateRange } from '../services/newsService';
 import { generateArticleId } from '../services/newsService';
 import { getBatchArticleVotes } from '../services/voteService';
 import { useAuth } from '../context/AuthContext';
@@ -21,6 +21,8 @@ const Home = ({ searchQuery, resetTrigger }) => {
   const [error, setError] = useState(null);
   const [sortBy, setSortBy] = useState('highest-votes');
   const [dateRange, setDateRange] = useState('all');
+  const [customFromDate, setCustomFromDate] = useState(null);
+  const [customToDate, setCustomToDate] = useState(null);
   const [selectedArticle, setSelectedArticle] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
   const [lastSearchQuery, setLastSearchQuery] = useState('');
@@ -32,10 +34,10 @@ const Home = ({ searchQuery, resetTrigger }) => {
     }
   }, [resetTrigger]);
 
-  // Fetch news articles when category changes
+  // Fetch news articles when category or date range changes
   useEffect(() => {
     fetchNews();
-  }, [category]);
+  }, [category, dateRange, customFromDate, customToDate]);
 
   // Handle search query changes
   useEffect(() => {
@@ -57,8 +59,16 @@ const Home = ({ searchQuery, resetTrigger }) => {
     setLastSearchQuery(''); // Clear last search query when loading regular news
 
     try {
-      // Fetch articles from NewsAPI
-      const fetchedArticles = await fetchTopHeadlines(category || 'general');
+      // Calculate date range based on filter
+      const apiDateRange = calculateDateRange(dateRange, customFromDate, customToDate);
+      
+      // Fetch articles from NewsAPI with date range
+      const fetchedArticles = await fetchTopHeadlines(
+        category || 'general',
+        'us',
+        100,
+        apiDateRange
+      );
       
       // Add unique IDs to articles
       const articlesWithIds = fetchedArticles.map(article => ({
@@ -89,8 +99,11 @@ const Home = ({ searchQuery, resetTrigger }) => {
     setLastSearchQuery(''); // Clear search state
 
     try {
+      // Calculate date range based on filter
+      const apiDateRange = calculateDateRange(dateRange, customFromDate, customToDate);
+      
       // Always fetch general news when resetting
-      const fetchedArticles = await fetchTopHeadlines('general');
+      const fetchedArticles = await fetchTopHeadlines('general', 'us', 100, apiDateRange);
       
       // Add unique IDs to articles
       const articlesWithIds = fetchedArticles.map(article => ({
@@ -120,8 +133,11 @@ const Home = ({ searchQuery, resetTrigger }) => {
     setIsSearching(true);
 
     try {
-      // Search articles from NewsAPI
-      const fetchedArticles = await searchNews(query);
+      // Calculate date range based on filter
+      const apiDateRange = calculateDateRange(dateRange, customFromDate, customToDate);
+      
+      // Search articles from NewsAPI with date range
+      const fetchedArticles = await searchNews(query, 100, apiDateRange);
       
       // Add unique IDs to articles
       const articlesWithIds = fetchedArticles.map(article => ({
@@ -151,6 +167,22 @@ const Home = ({ searchQuery, resetTrigger }) => {
       ...prev,
       [articleId]: updatedVotes
     }));
+  };
+
+  // Handle custom date range change
+  const handleCustomDateChange = (fromDate, toDate) => {
+    setCustomFromDate(fromDate);
+    setCustomToDate(toDate);
+  };
+
+  // Handle date range change
+  const handleDateRangeChange = (newRange) => {
+    setDateRange(newRange);
+    // Clear custom dates if switching away from custom
+    if (newRange !== 'custom') {
+      setCustomFromDate(null);
+      setCustomToDate(null);
+    }
   };
 
   // Handle read full article
@@ -299,7 +331,10 @@ const Home = ({ searchQuery, resetTrigger }) => {
         sortBy={sortBy}
         onSortChange={setSortBy}
         dateRange={dateRange}
-        onDateRangeChange={setDateRange}
+        onDateRangeChange={handleDateRangeChange}
+        customFromDate={customFromDate}
+        customToDate={customToDate}
+        onCustomDateChange={handleCustomDateChange}
       />
 
       {/* Articles Count */}
