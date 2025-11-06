@@ -3,18 +3,10 @@ import React from 'react';
 import { FaClock, FaExternalLinkAlt } from 'react-icons/fa';
 import VoteButtons from './VoteButtons';
 import { useAuth } from '../context/AuthContext';
+import { getProxiedImageUrl, handleImageError } from '../utils/imageUtils';
 
 const NewsCard = ({ article, votes, onVoteUpdate, onReadFullArticle }) => {
   const { user } = useAuth();
-
-  // Helper to check if image URL is valid
-  const isValidImageUrl = (url) => {
-    if (!url) return false;
-    // Must start with http and not contain known broken domains
-    if (!url.startsWith('http')) return false;
-    if (url.includes('phonearena.com') || url.includes('feedburner.com')) return false;
-    return true;
-  };
 
   // Format date
   const formatDate = (dateString) => {
@@ -39,25 +31,13 @@ const NewsCard = ({ article, votes, onVoteUpdate, onReadFullArticle }) => {
     <div className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden flex flex-col h-full">
       {/* Article Image */}
       <div className="relative h-64 overflow-hidden">
-        {isValidImageUrl(article.urlToImage) ? (
-          <img
-            loading="lazy"
-            src={article.urlToImage}
-            alt={article.title || 'News image'}
-            className="rounded-lg w-full h-64 object-cover"
-            onError={(e) => {
-              e.target.onerror = null; // prevent infinite loop
-              e.target.src = 'https://placehold.co/400x250?text=Image+Unavailable';
-            }}
-          />
-        ) : (
-          <img
-            loading="lazy"
-            src="https://placehold.co/400x250?text=No+Image+Available"
-            alt="No image available"
-            className="rounded-lg w-full h-64 object-cover"
-          />
-        )}
+        <img
+          loading="lazy"
+          src={getProxiedImageUrl(article.urlToImage, 'No+Image', '400x250')}
+          alt={article.title || 'News image'}
+          className="rounded-lg w-full h-64 object-cover"
+          onError={(e) => handleImageError(e, 'Image+Unavailable', '400x250')}
+        />
 
         {/* Category Badge */}
         {article.category && (

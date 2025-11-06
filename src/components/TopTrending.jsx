@@ -1,6 +1,7 @@
 // Top Trending component to show most upvoted articles
 import React from 'react';
 import { FaFire } from 'react-icons/fa';
+import { getProxiedImageUrl, handleImageError } from '../utils/imageUtils';
 
 const TopTrending = ({ articles, onArticleClick }) => {
   if (!articles || articles.length === 0) {
@@ -50,12 +51,10 @@ const TopTrending = ({ articles, onArticleClick }) => {
                 {/* Thumbnail */}
                 <img
                   loading="lazy"
-                  src={article.urlToImage || 'https://placehold.co/80x80?text=No+Image'}
+                  src={getProxiedImageUrl(article.urlToImage, 'No+Image', '80x80')}
                   alt={article.title || 'Article Image'}
                   className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
-                  onError={(e) => {
-                    e.target.src = 'https://placehold.co/80x80?text=No+Image';
-                  }}
+                  onError={(e) => handleImageError(e, 'No+Image', '80x80')}
                 />
               </div>
             </div>

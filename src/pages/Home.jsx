@@ -20,9 +20,7 @@ const Home = ({ searchQuery, resetTrigger }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [sortBy, setSortBy] = useState('highest-votes');
-  const [dateRange, setDateRange] = useState('all');
-  const [customFromDate, setCustomFromDate] = useState(null);
-  const [customToDate, setCustomToDate] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(null);
   const [selectedArticle, setSelectedArticle] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
   const [lastSearchQuery, setLastSearchQuery] = useState('');
@@ -34,10 +32,10 @@ const Home = ({ searchQuery, resetTrigger }) => {
     }
   }, [resetTrigger]);
 
-  // Fetch news articles when category or date range changes
+  // Fetch news articles when category or date changes
   useEffect(() => {
     fetchNews();
-  }, [category, dateRange, customFromDate, customToDate]);
+  }, [category, selectedDate]);
 
   // Handle search query changes
   useEffect(() => {
@@ -59,8 +57,8 @@ const Home = ({ searchQuery, resetTrigger }) => {
     setLastSearchQuery(''); // Clear last search query when loading regular news
 
     try {
-      // Calculate date range based on filter
-      const apiDateRange = calculateDateRange(dateRange, customFromDate, customToDate);
+      // Calculate date range for selected date (00:00:00 to 23:59:59)
+      const apiDateRange = calculateDateRange(selectedDate);
       
       // Fetch articles from NewsAPI with date range
       const fetchedArticles = await fetchTopHeadlines(
@@ -99,8 +97,8 @@ const Home = ({ searchQuery, resetTrigger }) => {
     setLastSearchQuery(''); // Clear search state
 
     try {
-      // Calculate date range based on filter
-      const apiDateRange = calculateDateRange(dateRange, customFromDate, customToDate);
+      // Calculate date range for selected date (00:00:00 to 23:59:59)
+      const apiDateRange = calculateDateRange(selectedDate);
       
       // Always fetch general news when resetting
       const fetchedArticles = await fetchTopHeadlines('general', 'us', 100, apiDateRange);
@@ -133,8 +131,8 @@ const Home = ({ searchQuery, resetTrigger }) => {
     setIsSearching(true);
 
     try {
-      // Calculate date range based on filter
-      const apiDateRange = calculateDateRange(dateRange, customFromDate, customToDate);
+      // Calculate date range for selected date (00:00:00 to 23:59:59)
+      const apiDateRange = calculateDateRange(selectedDate);
       
       // Search articles from NewsAPI with date range
       const fetchedArticles = await searchNews(query, 100, apiDateRange);
@@ -169,20 +167,9 @@ const Home = ({ searchQuery, resetTrigger }) => {
     }));
   };
 
-  // Handle custom date range change
-  const handleCustomDateChange = (fromDate, toDate) => {
-    setCustomFromDate(fromDate);
-    setCustomToDate(toDate);
-  };
-
-  // Handle date range change
-  const handleDateRangeChange = (newRange) => {
-    setDateRange(newRange);
-    // Clear custom dates if switching away from custom
-    if (newRange !== 'custom') {
-      setCustomFromDate(null);
-      setCustomToDate(null);
-    }
+  // Handle date change
+  const handleDateChange = (date) => {
+    setSelectedDate(date);
   };
 
   // Handle read full article
@@ -204,31 +191,6 @@ const Home = ({ searchQuery, resetTrigger }) => {
 
     // User is logged in, show article modal
     setSelectedArticle(article);
-  };
-
-  // Filter articles by date range
-  const filterByDateRange = (articles) => {
-    if (dateRange === 'all') return articles;
-
-    const now = new Date();
-    const filtered = articles.filter(article => {
-      const publishDate = new Date(article.publishedAt);
-      
-      switch (dateRange) {
-        case 'today':
-          return publishDate.toDateString() === now.toDateString();
-        case 'week':
-          const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-          return publishDate >= weekAgo;
-        case 'month':
-          const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-          return publishDate >= monthAgo;
-        default:
-          return true;
-      }
-    });
-
-    return filtered;
   };
 
   // Sort articles
@@ -283,9 +245,8 @@ const Home = ({ searchQuery, resetTrigger }) => {
     return sorted.slice(0, 3);
   };
 
-  // Apply filters and sorting
-  const filteredArticles = filterByDateRange(articles);
-  const sortedArticles = sortArticles(filteredArticles);
+  // Apply sorting (date filtering is handled by API)
+  const sortedArticles = sortArticles(articles);
   const topTrending = getTopTrending();
 
   if (loading) {
@@ -330,11 +291,8 @@ const Home = ({ searchQuery, resetTrigger }) => {
       <FilterSort
         sortBy={sortBy}
         onSortChange={setSortBy}
-        dateRange={dateRange}
-        onDateRangeChange={handleDateRangeChange}
-        customFromDate={customFromDate}
-        customToDate={customToDate}
-        onCustomDateChange={handleCustomDateChange}
+        selectedDate={selectedDate}
+        onDateChange={handleDateChange}
       />
 
       {/* Articles Count */}

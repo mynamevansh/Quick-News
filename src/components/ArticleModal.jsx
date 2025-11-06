@@ -1,6 +1,7 @@
 // Article modal component for reading full article
 import React from 'react';
 import { FaTimes, FaExternalLinkAlt } from 'react-icons/fa';
+import { getProxiedImageUrl, handleImageError } from '../utils/imageUtils';
 
 const ArticleModal = ({ article, onClose }) => {
   if (!article) return null;
@@ -26,12 +27,10 @@ const ArticleModal = ({ article, onClose }) => {
         <div className="p-6">
           {/* Image */}
           <img
-            src={article.urlToImage || 'https://placehold.co/800x400?text=No+Image+Available'}
+            src={getProxiedImageUrl(article.urlToImage, 'No+Image', '800x400')}
             alt={article.title}
             className="w-full h-64 object-cover rounded-lg mb-6"
-            onError={(e) => {
-              e.target.src = 'https://placehold.co/800x400?text=No+Image+Available';
-            }}
+            onError={(e) => handleImageError(e, 'Image+Unavailable', '800x400')}
           />
 
           {/* Source and Date */}

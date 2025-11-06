@@ -127,73 +127,27 @@ export const generateArticleId = (article) => {
 };
 
 /**
- * Calculate date range for filter options
- * @param {string} rangeType - Type of range: 'today', '24hours', 'week', 'month', 'custom'
- * @param {Date} fromDate - Custom start date (optional)
- * @param {Date} toDate - Custom end date (optional)
+ * Calculate date range for a specific date (00:00:00 to 23:59:59)
+ * @param {string} selectedDate - Selected date in YYYY-MM-DD format
  * @returns {Object|null} Date range { from, to } in ISO format or null
  */
-export const calculateDateRange = (rangeType, fromDate = null, toDate = null) => {
-  const now = new Date();
-  const formatDate = (date) => date.toISOString();
-
-  switch (rangeType) {
-    case 'today':
-    case '24hours':
-      const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-      return {
-        from: formatDate(yesterday),
-        to: formatDate(now)
-      };
-
-    case 'week':
-      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      return {
-        from: formatDate(weekAgo),
-        to: formatDate(now)
-      };
-
-    case 'month':
-      const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-      return {
-        from: formatDate(monthAgo),
-        to: formatDate(now)
-      };
-
-    case 'custom':
-      if (fromDate && toDate) {
-        const startDate = new Date(fromDate);
-        const endDate = new Date(toDate);
-        
-        // If same date selected, get articles for that entire day
-        if (fromDate === toDate) {
-          startDate.setHours(0, 0, 0, 0);
-          endDate.setHours(23, 59, 59, 999);
-        } else {
-          // Set to end of day for toDate
-          endDate.setHours(23, 59, 59, 999);
-        }
-        
-        return {
-          from: formatDate(startDate),
-          to: formatDate(endDate)
-        };
-      }
-      // Single date selection
-      if (fromDate && !toDate) {
-        const startDate = new Date(fromDate);
-        const endDate = new Date(fromDate);
-        startDate.setHours(0, 0, 0, 0);
-        endDate.setHours(23, 59, 59, 999);
-        return {
-          from: formatDate(startDate),
-          to: formatDate(endDate)
-        };
-      }
-      return null;
-
-    case 'all':
-    default:
-      return null; // No date filter
+export const calculateDateRange = (selectedDate = null) => {
+  // No date selected - return null (fetch all dates)
+  if (!selectedDate) {
+    return null;
   }
+
+  const formatDate = (date) => date.toISOString();
+  
+  // Single date selection - get entire day (00:00:00 to 23:59:59)
+  const startDate = new Date(selectedDate);
+  const endDate = new Date(selectedDate);
+  
+  startDate.setHours(0, 0, 0, 0);
+  endDate.setHours(23, 59, 59, 999);
+  
+  return {
+    from: formatDate(startDate),
+    to: formatDate(endDate)
+  };
 };
