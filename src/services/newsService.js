@@ -14,20 +14,17 @@ const BASE_URL = 'https://newsapi.org/v2';
  */
 export const fetchTopHeadlines = async (category = 'general', country = 'us', pageSize = 100, dateRange = null) => {
   try {
+    // If date range is specified, use /everything endpoint as /top-headlines has date limitations
+    if (dateRange?.from || dateRange?.to) {
+      return await fetchArticlesByDate(category, dateRange, pageSize);
+    }
+
     const params = {
       country,
       category,
       pageSize,
       apiKey: API_KEY
     };
-
-    // Add date range parameters if provided
-    if (dateRange?.from) {
-      params.from = dateRange.from;
-    }
-    if (dateRange?.to) {
-      params.to = dateRange.to;
-    }
 
     const response = await axios.get(`${BASE_URL}/top-headlines`, {
       params
@@ -36,6 +33,49 @@ export const fetchTopHeadlines = async (category = 'general', country = 'us', pa
     return response.data.articles || [];
   } catch (error) {
     console.error('Error fetching top headlines:', error);
+    throw new Error('Failed to fetch news articles. Please try again later.');
+  }
+};
+
+/**
+ * Fetch articles by date using /everything endpoint
+ * @param {string} category - News category
+ * @param {Object} dateRange - Date range { from, to } in ISO format
+ * @param {number} pageSize - Number of results per page
+ * @returns {Promise<Array>} Array of articles
+ */
+export const fetchArticlesByDate = async (category = 'general', dateRange, pageSize = 100) => {
+  try {
+    const params = {
+      language: 'en',
+      sortBy: 'publishedAt',
+      pageSize,
+      apiKey: API_KEY
+    };
+
+    // Add category as search query for better filtering
+    if (category && category !== 'general') {
+      params.q = category;
+    } else {
+      // For general, get popular topics
+      params.q = 'news OR world OR politics OR technology OR business';
+    }
+
+    // Add date range parameters
+    if (dateRange?.from) {
+      params.from = dateRange.from;
+    }
+    if (dateRange?.to) {
+      params.to = dateRange.to;
+    }
+
+    const response = await axios.get(`${BASE_URL}/everything`, {
+      params
+    });
+    
+    return response.data.articles || [];
+  } catch (error) {
+    console.error('Error fetching articles by date:', error);
     throw new Error('Failed to fetch news articles. Please try again later.');
   }
 };
@@ -122,9 +162,32 @@ export const calculateDateRange = (rangeType, fromDate = null, toDate = null) =>
 
     case 'custom':
       if (fromDate && toDate) {
+        const startDate = new Date(fromDate);
+        const endDate = new Date(toDate);
+        
+        // If same date selected, get articles for that entire day
+        if (fromDate === toDate) {
+          startDate.setHours(0, 0, 0, 0);
+          endDate.setHours(23, 59, 59, 999);
+        } else {
+          // Set to end of day for toDate
+          endDate.setHours(23, 59, 59, 999);
+        }
+        
         return {
-          from: formatDate(new Date(fromDate)),
-          to: formatDate(new Date(toDate))
+          from: formatDate(startDate),
+          to: formatDate(endDate)
+        };
+      }
+      // Single date selection
+      if (fromDate && !toDate) {
+        const startDate = new Date(fromDate);
+        const endDate = new Date(fromDate);
+        startDate.setHours(0, 0, 0, 0);
+        endDate.setHours(23, 59, 59, 999);
+        return {
+          from: formatDate(startDate),
+          to: formatDate(endDate)
         };
       }
       return null;

@@ -23,10 +23,10 @@ const FilterSort = ({
   };
 
   const handleApplyCustomRange = () => {
-    if (customFromDate && customToDate) {
+    if (customFromDate || customToDate) {
       onDateRangeChange('custom');
     } else {
-      alert('Please select both start and end dates');
+      alert('Please select at least one date');
     }
   };
 
@@ -35,6 +35,14 @@ const FilterSort = ({
     onCustomDateChange(null, null);
     onDateRangeChange('all');
   };
+
+  const handleClearAllFilters = () => {
+    setShowCustomRange(false);
+    onCustomDateChange(null, null);
+    onDateRangeChange('all');
+  };
+
+  const hasActiveFilter = dateRange !== 'all' || showCustomRange;
 
   return (
     <div className="bg-white rounded-lg shadow-md p-4 mb-6">
@@ -61,7 +69,7 @@ const FilterSort = ({
           </div>
 
           {/* Date Range Filter */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-3 flex-wrap">
             <FaFilter className="text-blue-600 text-xl" />
             <label htmlFor="dateRange" className="font-semibold text-gray-700">
               Date Range:
@@ -79,6 +87,18 @@ const FilterSort = ({
               <option value="month">Past Month</option>
               <option value="custom">Custom Range</option>
             </select>
+            
+            {/* Clear Filter Button */}
+            {hasActiveFilter && (
+              <button
+                onClick={handleClearAllFilters}
+                className="px-3 py-2 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition flex items-center space-x-1 text-sm"
+                title="Clear all filters"
+              >
+                <FaTimes />
+                <span>Clear Filter</span>
+              </button>
+            )}
           </div>
         </div>
 
